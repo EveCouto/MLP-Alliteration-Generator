@@ -6,7 +6,7 @@ import urllib.request
 from PIL import Image
 
 
-def get_images(character: str):
+def get_images(tags: list):
     """
     Uses Derpibooru API to get images
 
@@ -16,7 +16,7 @@ def get_images(character: str):
     images = []
     for image in (Search()
                   # Guarantees the images are from the show
-                  .query(character, "screen cap", "-edit", "solo")
+                  .query(*tags)
                   .sort_by(sort.RANDOM)):
         images.append(image.full)
     return images
@@ -61,12 +61,12 @@ def day(string):
     :param string: string
     :type string: str
     """
-    days = {"monday": 1, "mon": 1, "tuesday": 2, "tue": 2,
-            "wednesday": 3, "wed": 3, "thursday": 4, "thu": 4,
-            "friday": 5, "fri": 5, "saturday": 6, "sat": 6,
-            "sunday": 7, "sun": 7}
-    if string in days.keys:
-        return days[string]
+    days = ["monday", "mon", "tuesday", "tue",
+            "wednesday", "wed", "thursday", "thu",
+            "friday", "fri", "saturday", "sat",
+            "sunday", "sun"]
+    if string in days:
+        return string
     else:
         raise NotADayError(string)
 
@@ -103,16 +103,20 @@ def start_parser():
 
 
 def main():
+    day_map = {"monday": 1, "mon": 1, "tuesday": 2, "tue": 2,
+               "wednesday": 3, "wed": 3, "thursday": 4, "thu": 4,
+               "friday": 5, "fri": 5, "saturday": 6, "sat": 6,
+               "sunday": 7, "sun": 7}
     args = start_parser()
     script = args.script
     output = args.output
     title = args.title
     character = args.char
-    day = args.day
+    day = day_map[args.day]
 
     print(script, output, title, character, day)
 
-    images = get_images(character)
+    images = get_images([character, "safe", "screencap", "-edit"])
     if len(images) < 30:
         print("Not enough images for this character, exiting")
     for url in images[:5]:
