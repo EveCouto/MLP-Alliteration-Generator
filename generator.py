@@ -3,7 +3,6 @@ import argparse
 import os
 import time
 import urllib.request
-from PIL import Image
 import moviepy as mpy
 
 
@@ -75,7 +74,7 @@ def day(string):
 def image_to_videoclip(path: str, start: float, duration: float):
     """
     Takes an image file, start time and duration, makes clip
-    
+
     :param path: image file path
     :type path: str
     :param start: start time in seconds
@@ -86,27 +85,37 @@ def image_to_videoclip(path: str, start: float, duration: float):
     if os.path.splitext(path)[1] in [".gif", ".webm"]:
         clip = mpy.VideoFileClip(path)
         if clip.duration <= duration:
-            clip = mpy.concatenate_videoclips([clip] * int(duration / clip.duration + 2))
+            clip = mpy.concatenate_videoclips(
+                [clip] * int(duration / clip.duration + 2))
     else:
         clip = mpy.ImageClip(path)
 
-    clip = clip.with_start(start).with_duration(duration).with_position("center").resized(height=720)
+    clip = (clip.with_start(start)
+            .with_duration(duration)
+            .with_position("center")
+            .resized(height=720))
     return clip
 
 
-def paths_to_clip(paths: list[str], starts: list[float], durations: list[float], text: list[str], audio: str):
+def paths_to_clip(paths: list[str], starts: list[float],
+                  durations: list[float], text: list[str], audio: str):
     clips = []
-    
-    for i in range(min(len(starts),len(durations),len(paths))):
+
+    for i in range(min(len(starts), len(durations), len(paths))):
         clips.append(image_to_videoclip(paths[i], starts[i], durations[i]))
-        clips.append(mpy.TextClip("./defaults/Lexend-Bold.ttf", text[i],font_size=70, color=(255,255,255), size=(1000, 500), stroke_color=(0,0,0), stroke_width=5).with_start(starts[i]).with_duration(durations[i]).with_position("center"))
-    
+        clips.append(mpy.TextClip("./defaults/Lexend-Bold.ttf", text[i],
+                                  font_size=70, color=(255, 255, 255),
+                                  size=(1000, 500), stroke_color=(0, 0, 0),
+                                  stroke_width=5).with_start(starts[i])
+                     .with_duration(durations[i]).with_position("center"))
+
     total_length = starts[-1] + durations[-1]
     audio_clip = mpy.AudioFileClip(audio)
     if audio_clip.duration <= total_length:
-        audio_clip = mpy.concatenate_audioclips([audio_clip] * int(total_length / audio_clip.duration + 2))
-    
-    video = mpy.CompositeVideoClip(clips, bg_color=(0,0,0), size=(1280,720))
+        audio_clip = mpy.concatenate_audioclips(
+            [audio_clip] * int(total_length / audio_clip.duration + 2))
+
+    video = mpy.CompositeVideoClip(clips, bg_color=(0, 0, 0), size=(1280, 720))
     video.audio = audio_clip.with_duration(total_length)
     return video
 
@@ -114,13 +123,13 @@ def paths_to_clip(paths: list[str], starts: list[float], durations: list[float],
 def time_parser(time_string: str):
     time_strings = time_string.split("-->")
     time_list = []
-    for time in time_strings:
-        split_times = time.split(":")
+    for t in time_strings:
+        split_times = t.split(":")
         seconds = 0
-        sections = time.count(":")
+        sections = t.count(":")
         for x in range(sections+1):
             seconds += 60**(sections-x) * float(split_times[x].strip())
-        time_list.append(seconds) 
+        time_list.append(seconds)
     return time_list
 
 
@@ -143,8 +152,8 @@ def script_file_parser(script: str):
                 tags = lines[i+2].split(",")
             else:
                 exit
-            all_data.append({"time":frame_time, "text":text, "tags":tags})
-            
+            all_data.append({"time": frame_time, "text": text, "tags": tags})
+
     return all_data
 
 
@@ -165,12 +174,11 @@ def data_to_video(data: list[dict], output, title, audio):
         starts.append(frame["time"][0])
         durations.append(frame["time"][1]-frame["time"][0])
         text.append(frame["text"])
-        
+
     video = paths_to_clip(images, starts, durations, text, audio)
     video.write_videofile(os.path.join(output, title+".mp4"), fps=24)
 
     return all_tags
-
 
 
 def start_parser():
@@ -210,7 +218,7 @@ def main():
     with open(script, "r") as file:
         frame_data = script_file_parser(file.read())
         all_tags = data_to_video(frame_data, output, title, audio)
-    
+
     artists = []
     for tags in all_tags:
         artists.extend(t[7:] for t in tags if t.startswith("artist:"))
