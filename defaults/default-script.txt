@@ -1,27 +1,23 @@
-00:00:00.000 --> 00:00:05.000
-1 some info
-fluttershy, walking, solo, safe
+00:00:00.000 --> 00:00:04.000
+It's Fluttershy Friday, finally fair
+fluttershy, walking, solo, safe, pony
 
-00:00:05.000 --> 00:00:10.000
-2 more info
-rarity, solo, safe, animated
+00:00:04.000 --> 00:00:8.000
+Flowers, friends, and fresh forest air.
+fluttershy, safe, forest, pony
 
-00:00:10.000 --> 00:00:15.000
-3 even more
-spike, solo, safe, dragon
+00:00:8.000 --> 00:00:11.000
+Frightened? Maybe-but Friday's here,
+fluttershy, scared, safe, pony, animated
 
-00:00:15.000 --> 00:00:21.000
-4 again
-twilight sparkle, solo, safe
+00:00:11.000 --> 00:00:17.000
+So even shy ponies feel slightly more brave, my dear.
+fluttershy, safe, pony
 
-00:00:21.000 --> 00:00:26.000
-5 woah so much info
-rainbow dash, solo, safe, animated
+00:00:17.000 --> 00:00:22.000
+Soft smiles, small fun, the week says goodbye-
+fluttershy, solo, safe, animated, pony
 
-00:00:26.000 --> 00:00:30.000
- 
-applejack, solo, safe
-
-30.000 --> 34.000
-7 coolio
-sunset shimmer, solo, safe
+00:00:22.000 --> 00:00:26.000
+That's the magic of Fluttershy Friday
+fluttershy, safe, magic, pony

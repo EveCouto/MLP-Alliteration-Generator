@@ -4,6 +4,7 @@ import os
 import time
 import urllib.request
 import moviepy as mpy
+import shutil
 
 
 def get_images(tags: list):
@@ -48,30 +49,7 @@ def file_path(string: str):
         raise NotADirectoryError(string)
 
 
-class NotADayError(Exception):
-    """
-    NotADayError
-    """
-
-
-def day(string):
-    """
-    Checks if string is a day
-
-    :param string: string
-    :type string: str
-    """
-    days = ["monday", "mon", "tuesday", "tue",
-            "wednesday", "wed", "thursday", "thu",
-            "friday", "fri", "saturday", "sat",
-            "sunday", "sun"]
-    if string in days:
-        return string
-    else:
-        raise NotADayError(string)
-
-
-def image_to_videoclip(path: str, start: float, duration: float):
+def image_to_videoclip(path: str, start: float, end: float):
     """
     Takes an image file, start time and duration, makes clip
 
@@ -79,37 +57,53 @@ def image_to_videoclip(path: str, start: float, duration: float):
     :type path: str
     :param start: start time in seconds
     :type start: float
-    :param duration: duration in seconds
-    :type duration: float
+    :param end: end time in seconds
+    :type end: float
     """
     if os.path.splitext(path)[1] in [".gif", ".webm"]:
         clip = mpy.VideoFileClip(path)
-        if clip.duration <= duration:
+        if clip.duration <= end-start:
             clip = mpy.concatenate_videoclips(
-                [clip] * int(duration / clip.duration + 2))
+                [clip] * int((end-start) / clip.duration + 2))
     else:
         clip = mpy.ImageClip(path)
 
     clip = (clip.with_start(start)
-            .with_duration(duration)
+            .with_end(end)
             .with_position("center")
             .resized(height=720))
     return clip
 
 
 def paths_to_clip(paths: list[str], starts: list[float],
-                  durations: list[float], text: list[str], audio: str):
+                  ends: list[float], text: list[str], audio: str):
+    """
+    Takes data and makes a clip
+
+    :param paths: list of img paths
+    :type paths: list[str]
+    :param starts: list of start times
+    :type starts: list[float]
+    :param ends: lsit of end times
+    :type ends: list[float]
+    :param text: display text
+    :type text: list[str]
+    :param audio: audio path
+    :type audio: str
+    """
     clips = []
 
-    for i in range(min(len(starts), len(durations), len(paths))):
-        clips.append(image_to_videoclip(paths[i], starts[i], durations[i]))
+    for i in range(min(len(starts), len(ends), len(paths))):
+        clips.append(image_to_videoclip(paths[i], starts[i], ends[i]))
         clips.append(mpy.TextClip("./defaults/Lexend-Bold.ttf", text[i],
                                   font_size=70, color=(255, 255, 255),
                                   size=(1000, 500), stroke_color=(0, 0, 0),
-                                  stroke_width=5).with_start(starts[i])
-                     .with_duration(durations[i]).with_position("center"))
+                                  stroke_width=5, method="caption",
+                                  text_align="center")
+                     .with_start(starts[i])
+                     .with_end(ends[i]).with_position(("center", "bottom")))
 
-    total_length = starts[-1] + durations[-1]
+    total_length = ends[-1]
     audio_clip = mpy.AudioFileClip(audio)
     if audio_clip.duration <= total_length:
         audio_clip = mpy.concatenate_audioclips(
@@ -121,6 +115,12 @@ def paths_to_clip(paths: list[str], starts: list[float],
 
 
 def time_parser(time_string: str):
+    """
+    Takes a 00:00:00.000 time and converts to seconds
+
+    :param time_string: Description
+    :type time_string: str
+    """
     time_strings = time_string.split("-->")
     time_list = []
     for t in time_strings:
@@ -134,6 +134,12 @@ def time_parser(time_string: str):
 
 
 def script_file_parser(script: str):
+    """
+    Takes in custom data file and converts to data
+
+    :param script: fancy .txt file
+    :type script: str
+    """
     lines = script.splitlines()
     all_data = []
     single_data = {}
@@ -157,27 +163,45 @@ def script_file_parser(script: str):
     return all_data
 
 
-def data_to_video(data: list[dict], output, title, audio):
+def data_to_video(data: list[dict], output: str, title: str, audio: str):
+    """
+    Takes some info and makes a video from it
+
+    :param data: List of dicts with times, tags and text
+    :type data: list[dict]
+    :param output: output file
+    :param title: output title
+    :param audio: audio file
+    """
     images = []
     starts = []
-    durations = []
+    ends = []
     text = []
     all_tags = []
 
     for frame in data:
-        img = get_images(frame["tags"])[0]
-        url = img[0]
-        all_tags.append(img[1])
-        save_path = os.path.join("./cache/", os.path.basename(url))
-        urllib.request.urlretrieve(url, save_path)
+        # Downloads images
+        imgs = get_images(frame["tags"])
+        if len(imgs) != 0:
+            img = imgs[0]
+            url = img[0]
+            all_tags.append(img[1])
+            save_path = os.path.join("./cache/", os.path.basename(url))
+            urllib.request.urlretrieve(url, save_path)
+        else:
+            save_path = "./defaults/default-image.jpg"
+
+        # Adds data to lists
         images.append(save_path)
         starts.append(frame["time"][0])
-        durations.append(frame["time"][1]-frame["time"][0])
+        ends.append(frame["time"][1])
         text.append(frame["text"])
 
-    video = paths_to_clip(images, starts, durations, text, audio)
+    # Creates video and saves it
+    video = paths_to_clip(images, starts, ends, text, audio)
     video.write_videofile(os.path.join(output, title+".mp4"), fps=24)
 
+    # Returns all tags for artist recognition
     return all_tags
 
 
@@ -189,11 +213,11 @@ def start_parser():
     parser = argparse.ArgumentParser(description=(
         "Allows for wacky MLP videos to be made"))
     parser.add_argument("-i", "--script",
-                        help=".vtt script path",
+                        help="Script path",
                         default="./defaults/default-script.txt",
                         type=file_path)
     parser.add_argument("-a", "--audio",
-                        help="Audio for the video",
+                        help="Audio path",
                         default="./defaults/default-song.mp3",
                         type=str)
     parser.add_argument("-o", "--output",
@@ -202,10 +226,22 @@ def start_parser():
                         type=dir_path)
     parser.add_argument("-t", "--title",
                         help="Title of video",
-                        default=f"MLP-Alliteration-{current_time}",
+                        default=f"MLP-Video-{current_time}",
                         type=str)
     args = parser.parse_args()
     return args
+
+
+def empty_folder(path: str):
+    for item in os.listdir(path):
+        item_path = os.path.join(path, item)
+        try:
+            if os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)  # Remove file or symlink
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)  # Remove directory
+        except Exception as e:
+            print(f"Failed to delete {item_path}. Reason: {e}")
 
 
 def main():
@@ -215,6 +251,8 @@ def main():
     title = args.title
     audio = args.audio
 
+    empty_folder("./cache/")
+
     with open(script, "r") as file:
         frame_data = script_file_parser(file.read())
         all_tags = data_to_video(frame_data, output, title, audio)
@@ -222,7 +260,7 @@ def main():
     artists = []
     for tags in all_tags:
         artists.extend(t[7:] for t in tags if t.startswith("artist:"))
-    print("Artists included in thie video:\n", "\n".join(artists))
+    print("\nArtists included in thie video:\n" + "\n".join(artists) + "\n")
 
 
 if __name__ == "__main__":
