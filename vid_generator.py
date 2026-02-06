@@ -16,7 +16,7 @@ def get_images(tags: list):
     """
     images = []
     for image in (Search()
-                  # Guarantees the images are from the show
+                  # Guarantees the images follow tags
                   .query(*tags)
                   .sort_by(sort.RANDOM)):
         images.append((image.full, image.tags))
@@ -60,6 +60,7 @@ def image_to_videoclip(path: str, start: float, end: float):
     :param end: end time in seconds
     :type end: float
     """
+    # Adds multiple loops for videos/gifs to prevent stopping
     if os.path.splitext(path)[1] in [".gif", ".webm"]:
         clip = mpy.VideoFileClip(path)
         if clip.duration <= end-start:
@@ -68,6 +69,7 @@ def image_to_videoclip(path: str, start: float, end: float):
     else:
         clip = mpy.ImageClip(path)
 
+    # Adds data to clips and returns it
     clip = (clip.with_start(start)
             .with_end(end)
             .with_position("center")
@@ -92,10 +94,10 @@ def paths_to_clip(paths: list[str], starts: list[float],
     :type audio: str
     """
     clips = []
-
+    # Adds text and image to clips with corresponding time data
     for i in range(min(len(starts), len(ends), len(paths))):
         clips.append(image_to_videoclip(paths[i], starts[i], ends[i]))
-        clips.append(mpy.TextClip("./defaults/Lexend-Bold.ttf", text[i],
+        clips.append(mpy.TextClip("./defaults/default-font.ttf", text[i],
                                   font_size=70, color=(255, 255, 255),
                                   size=(1000, 500), stroke_color=(0, 0, 0),
                                   stroke_width=5, method="caption",
@@ -103,12 +105,14 @@ def paths_to_clip(paths: list[str], starts: list[float],
                      .with_start(starts[i])
                      .with_end(ends[i]).with_position(("center", "bottom")))
 
+    # Creates audio clip
     total_length = ends[-1]
     audio_clip = mpy.AudioFileClip(audio)
     if audio_clip.duration <= total_length:
         audio_clip = mpy.concatenate_audioclips(
             [audio_clip] * int(total_length / audio_clip.duration + 2))
 
+    # Merges clips and adds audio to video
     video = mpy.CompositeVideoClip(clips, bg_color=(0, 0, 0), size=(1280, 720))
     video.audio = audio_clip.with_duration(total_length)
     return video
@@ -144,9 +148,11 @@ def script_file_parser(script: str):
     all_data = []
     single_data = {}
     for i in range(len(lines)):
+        # Each section starts with time data
         if "-->" in lines[i]:
             single_data.clear()
             frame_time = time_parser(lines[i])
+            # No way to tell if file ends or no tags
             if i+1 >= len(lines) or lines[i+1] == "":
                 text = ""
                 tags = []
@@ -233,13 +239,19 @@ def start_parser():
 
 
 def empty_folder(path: str):
+    """
+    Takes a folder path and clears its contents
+
+    :param path: fodler path
+    :type path: str
+    """
     for item in os.listdir(path):
         item_path = os.path.join(path, item)
         try:
             if os.path.isfile(item_path) or os.path.islink(item_path):
-                os.unlink(item_path)  # Remove file or symlink
+                os.unlink(item_path)
             elif os.path.isdir(item_path):
-                shutil.rmtree(item_path)  # Remove directory
+                shutil.rmtree(item_path)
         except Exception as e:
             print(f"Failed to delete {item_path}. Reason: {e}")
 
@@ -251,12 +263,17 @@ def main():
     title = args.title
     audio = args.audio
 
+    # Creates and empties cache folder
+    if not os.path.exists("./cache"):
+        os.makedirs("./cache")
     empty_folder("./cache/")
 
+    # Loads script file and creates video from it
     with open(script, "r") as file:
         frame_data = script_file_parser(file.read())
         all_tags = data_to_video(frame_data, output, title, audio)
 
+    # Prints out the artists from the images if listed
     artists = []
     for tags in all_tags:
         artists.extend(t[7:] for t in tags if t.startswith("artist:"))
