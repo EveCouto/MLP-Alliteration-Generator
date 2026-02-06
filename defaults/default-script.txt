@@ -1,15 +1,27 @@
-YOOOOO!!!
-Straight Fonky
-Its %NAME% Tuesday
-Am I still dreaming?!? %DATE% is Finally here
-I'm Ready to get through the day!!!
-Me and the mares finna eat good this morning
-Cmon wake up everypony
-I can't wait to see my friends
-Guitar solo!!
-%DATE-1% sure was tough...
-But today Im feelin great and powerful!!!!
-When the opportunity presents itself I will perform at my most powerful and greatest!
-I can do this!
-Shieeeet mare im supa fly!!
-Sax!!!
+00:00:00.000 --> 00:00:05.000
+1 some info
+fluttershy, walking, solo, safe
+
+00:00:05.000 --> 00:00:10.000
+2 more info
+rarity, solo, safe, animated
+
+00:00:10.000 --> 00:00:15.000
+3 even more
+spike, solo, safe, dragon
+
+00:00:15.000 --> 00:00:21.000
+4 again
+twilight sparkle, solo, safe
+
+00:00:21.000 --> 00:00:26.000
+5 woah so much info
+rainbow dash, solo, safe, animated
+
+00:00:26.000 --> 00:00:30.000
+ 
+applejack, solo, safe
+
+30.000 --> 34.000
+7 coolio
+sunset shimmer, solo, safe
