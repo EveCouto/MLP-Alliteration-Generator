@@ -228,7 +228,7 @@ def start_parser():
                         type=str)
     parser.add_argument("-o", "--output",
                         help="Output folder path",
-                        default=".",
+                        required=True,
                         type=dir_path)
     parser.add_argument("-t", "--title",
                         help="Title of video",
