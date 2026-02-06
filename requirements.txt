@@ -1,0 +1,2 @@
+DerPyBooru==0.7.5
+moviepy==2.2.1
