@@ -8,6 +8,12 @@ When running the script the only flag needed is -o denoting the output folder.
 
 Run with -h to see all the options.
 
+Quick Example, Art included from: cherrnichka, simonk0, nedemai
+
+<img width="400" height="225" alt="mlp-vid" src="https://github.com/user-attachments/assets/2b2c91c9-7586-4247-9269-fb9e901987a6" />
+
+
+
 ## Script File
 
 The script file is organised as such:
